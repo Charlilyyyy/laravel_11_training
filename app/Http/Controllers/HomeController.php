@@ -11,27 +11,23 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Resources\PostResource;
+use App\Http\Requests\PostRequest;
+use App\Repositories\PostRepository;
 
 class HomeController extends Controller
 {
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
+    public function __construct(protected PostRepository $postRepository){
         $this->middleware('auth');
     }
 
-    /**
-     * Show the application dashboard.
-     *
-     * @return \Illuminate\Contracts\Support\Renderable
-     */
-    public function index($type = 'home')
-    {
-        $postPlural = Post::select('id','content','parent_post_id','user_id','created_at','updated_at');
+    public function index($type = 'home'){
+        $validTypes = ['home', 'my_posts', 'my_replies', 'my_bookmarks'];
+        if (!in_array($type, $validTypes)) {
+            return redirect()->route('home'); // Redirect to the default home route
+        }
+
+        $postPlural = Post::query();
 
         if ($type == 'home'){
             $postPlural = $postPlural->whereNull('parent_post_id');
@@ -45,18 +41,17 @@ class HomeController extends Controller
             });
         }
 
-        $postPlural = $postPlural->orderByDesc('created_at')->paginate(10);
+        $posts = PostResource::collection($postPlural->orderByDesc('created_at')->paginate(10));
 
         $data = [
-            'postPlural' => $postPlural,
+            'postPlural' => $posts,
             'type' => $type,
         ];
 
         return view('home', $data);
     }
 
-    public function postDetail($id)
-    {
+    public function postDetail($id){
         $postSingular = Post::find($id);
 
         $childPostPlural = Post::where('parent_post_id',$id)->paginate(10);
@@ -69,102 +64,39 @@ class HomeController extends Controller
         return view('details', $data);
     }
 
-    public function postCreate(Request $request, $id = null)
-    {
-        // dd($request->all());
-        $request->validate([
-            'context' => ['required', 'string', 'max:255'],
-        ]);
+    public function postCreate(PostRequest $request, $id = null){
+        $request->validated();
 
-        DB::beginTransaction();
-        try {
+        $post = $this->postRepository->createPost($request->only('context'), $id);
 
-            $post = Post::create([
-                'content' => $request->context,
-                'parent_post_id' => $id ?? null,
-                'user_id' => Auth::id(),
-                'created_by' => Auth::id(),
-                'created_at' => new DateTime(),
-                'updated_by' => Auth::id(),
-                'updated_at' => new DateTime(),
-            ]);
-
-            DB::commit();
-
-            if($id != null) {
-                return Redirect::route('postDetail',[$id])->with('successMessage', 'Information succesfully created!');
+        if ($post) {
+            if ($id != null) {
+                return Redirect::route('postDetail', [$id])->with('successMessage', 'Information successfully created!');
             } else {
-                return Redirect::back()->with('successMessage', 'Information succesfully created!');
+                return Redirect::back()->with('successMessage', 'Information successfully created!');
             }
-
-
-        } catch (\Exception $e) {
-            //if ada error
-            // dd($e);
-            DB::rollback();
-
-            Log::info(Route::currentRouteAction());
-            Log::error($e);
-
-            return back()->with('failedMessage', 'ERROR')->withInput();
+        } else {
+            // In case the post creation failed
+            return back()->with('failedMessage', 'Error occurred while creating the post')->withInput();
         }
     }
 
-    public function postUpdate(Request $request, $id)
-    {
-        // dd($request->all());
-        $request->validate([
-            'context' => ['required', 'string', 'max:255'],
-        ]);
-
-        DB::beginTransaction();
-        try {
-
-            $post = Post::where('id',$id)->update([
-                'content' => $request->context,
-                'updated_by' => Auth::id(),
-                'updated_at' => new DateTime(),
-            ]);
-
-            DB::commit();
-
-            return Redirect::back()->with('successMessage', 'Information succesfully updated!');
-
-        } catch (\Exception $e) {
-            //if ada error
-            // dd($e);
-            DB::rollback();
-
-            Log::info(Route::currentRouteAction());
-            Log::error($e);
-
-            return back()->with('failedMessage', 'ERROR')->withInput();
+    public function postUpdate(PostRequest $request, $id){
+        $request->validated();
+        $updateSuccess = $this->postRepository->updatePost($id, $request->only('context'));
+        if ($updateSuccess) {
+            return Redirect::back()->with('successMessage', 'Information successfully updated!');
+        } else {
+            return back()->with('failedMessage', 'Error occurred while updating the post')->withInput();
         }
     }
 
-    public function postDelete($id)
-    {
-        // dd($id);
-        // dd($request->all());
-
-        DB::beginTransaction();
-        try {
-
-            $post = Post::where('id',$id)->delete();
-
-            DB::commit();
-
-            return Redirect::back()->with('successMessage', 'Information succesfully deleted!');
-
-        } catch (\Exception $e) {
-            //if ada error
-            // dd($e);
-            DB::rollback();
-
-            Log::info(Route::currentRouteAction());
-            Log::error($e);
-
-            return back()->with('failedMessage', 'ERROR')->withInput();
+    public function postDelete($id){
+        $deleteSuccess = $this->postRepository->deletePost($id);
+        if ($deleteSuccess) {
+            return Redirect::back()->with('successMessage', 'Information successfully deleted!');
+        } else {
+            return back()->with('failedMessage', 'Error occurred while deleting the post');
         }
     }
 
@@ -206,6 +138,4 @@ class HomeController extends Controller
             return back()->with('failedMessage', 'ERROR')->withInput();
         }
     }
-
-    //
 }

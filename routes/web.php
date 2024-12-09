@@ -3,11 +3,13 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect()->route('home');
+    }
     return view('welcome');
 });
 
 Auth::routes();
-
 
 Route::middleware('auth')->group(function () {
     Route::get('/home/{type?}', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

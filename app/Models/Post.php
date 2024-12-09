@@ -37,13 +37,11 @@ class Post extends Model
         return $this->hasMany('App\Models\Post', 'parent_post_id');
     }
 
-    public function parentPostSingular()
-    {
+    public function parentPostSingular(){
         return $this->belongsTo('App\Models\Post', 'parent_post_id');
     }
 
-    public function UserSingular()
-    {
+    public function UserSingular(){
         return $this->belongsTo('App\Models\User', 'user_id');
     }
 }

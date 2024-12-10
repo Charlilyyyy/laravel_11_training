@@ -1,4 +1,4 @@
-@extends('layouts.taufik')
+@extends('layouts.app')
 @section('content')
 
 
@@ -23,7 +23,7 @@
 <div style="margin-top: 100px"></div>
 
 <form method="POST" action="{{ route('createUser') }}">
-    @csrf
+    @csrt
     <div>
         <label>Name : </label>
         <input name="name" type="text"/>

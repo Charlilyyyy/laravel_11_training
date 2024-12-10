@@ -22,15 +22,15 @@ class TaufikController extends Controller
         ]);
     }
 
-    public function createUser(UserRequest $request){
+    private function createUser(UserRequest $request){
         $request->validated();
         try{
             $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
+                'nama' => $request->name,
+                'emel' => $request->email,
+                'kata_laluan' => Hash::make($request->password),
             ]);
-            \Log::error($user);
+            \Log::info($user);
         }catch(Exception){
             \Log::error($e);
         }

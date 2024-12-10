@@ -24,7 +24,7 @@ Route::middleware('auth')->group(function () {
 
 // practice
 Route::get('/taufik', [TaufikController::class, 'index'])->name('taufik.index');
-Route::post('/taufik/createUser', [TaufikController::class, 'createUser'])->name('createUser');
+Route::post('/taufik/createUser', [TaufikController::class, 'createUsers'])->name('createUser');
 
 
 

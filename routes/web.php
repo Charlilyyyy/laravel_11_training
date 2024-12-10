@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Taufik\TaufikController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -12,10 +14,19 @@ Route::get('/', function () {
 Auth::routes();
 
 Route::middleware('auth')->group(function () {
-    Route::get('/home/{type?}', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-    Route::post('/post/create/{id?}', [App\Http\Controllers\HomeController::class, 'postCreate'])->name('postCreate');
-    Route::get('/post/{id}/detail', [App\Http\Controllers\HomeController::class, 'postDetail'])->name('postDetail');
-    Route::patch('/post/{id}/update', [App\Http\Controllers\HomeController::class, 'postUpdate'])->name('postUpdate');
-    Route::delete('/post/{id}/delete', [App\Http\Controllers\HomeController::class, 'postDelete'])->name('postDelete');
-    Route::get('/post/{id}/interact', [App\Http\Controllers\HomeController::class, 'postInteract'])->name('postInteract');
+    Route::get('/home/{type?}', [HomeController::class, 'index'])->name('home');
+    Route::post('/post/create/{id?}', [HomeController::class, 'postCreate'])->name('postCreate');
+    Route::get('/post/{id}/detail', [HomeController::class, 'postDetail'])->name('postDetail');
+    Route::patch('/post/{id}/update', [HomeController::class, 'postUpdate'])->name('postUpdate');
+    Route::delete('/post/{id}/delete', [HomeController::class, 'postDelete'])->name('postDelete');
+    Route::get('/post/{id}/interact', [HomeController::class, 'postInteract'])->name('postInteract');
 });
+
+// practice
+Route::get('/taufik', [TaufikController::class, 'index'])->name('taufik.index');
+Route::post('/taufik/createUser', [TaufikController::class, 'createUser'])->name('createUser');
+
+
+
+// php artisan make:controller Taufik/TaufikController
+
